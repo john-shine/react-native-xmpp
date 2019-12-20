@@ -150,7 +150,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         XMPPTCPConnectionConfiguration.Builder confBuilder = null;
         try {
 
-            InetAddress inetAddress = getInetAddressByName("mntto.com");
+            InetAddress inetAddress = getInetAddressByName(hostname);
             HostnameVerifier verifier = new HostnameVerifier() {
                 @Override
                 public boolean verify(String hostname, SSLSession session) {
@@ -190,16 +190,16 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             confBuilder.setPort(port);
         }
 
-//        if (trustedHosts.contains(hostname) || (hostname == null && trustedHosts.contains(serviceName))){
-//            confBuilder.setSecurityMode(SecurityMode.disabled);
-//              TLSUtils.disableHostnameVerificationForTlsCertificates(confBuilder);
-//              //TLSUtils.disableHostnameVerificationForTlsCertificicates(confBuilder);
-//            try {
-//                TLSUtils.acceptAllCertificates(confBuilder);
-//            } catch (NoSuchAlgorithmException | KeyManagementException e) {
-//                e.printStackTrace();
-//            }
-//        }
+       if (trustedHosts.contains(hostname) || (hostname == null && trustedHosts.contains(serviceName))){
+           confBuilder.setSecurityMode(SecurityMode.disabled);
+             TLSUtils.disableHostnameVerificationForTlsCertificates(confBuilder);
+             //TLSUtils.disableHostnameVerificationForTlsCertificicates(confBuilder);
+           try {
+               TLSUtils.acceptAllCertificates(confBuilder);
+           } catch (NoSuchAlgorithmException | KeyManagementException e) {
+               e.printStackTrace();
+           }
+       }
 
 
         XMPPTCPConnectionConfiguration connectionConfiguration = confBuilder.build();
@@ -221,8 +221,6 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         roster.addRosterLoadedListener(this);
         new ReconnectionTask().execute();
     }
-
-
 
 
     public void joinRoom(String roomJid, String userNickname,String lastMessage) {
