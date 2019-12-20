@@ -34,7 +34,6 @@ public interface XmppService {
     @ReactMethod
     void messageUpdated(String text, String to, String thread,String messageId);
 
-
     @ReactMethod
     void presence(String to, String type);
 

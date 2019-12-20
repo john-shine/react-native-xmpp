@@ -80,8 +80,6 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
         this.xmppService.messageUpdated(text, to, thread,messageId);
     }
 
-
-
     @Override
     @ReactMethod
     public void presence(String to, String type) {
@@ -129,6 +127,5 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
     public void requestMessageId() {
       this.xmppService.requestMessageId();
     }
-
 
 }

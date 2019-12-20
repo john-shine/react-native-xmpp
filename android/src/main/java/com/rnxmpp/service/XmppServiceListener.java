@@ -25,7 +25,4 @@ public interface XmppServiceListener {
     void onConnnect(String username, String password);
     void onDisconnect(Exception e);
     void onLogin(String username, String password);
-
-
-
 }

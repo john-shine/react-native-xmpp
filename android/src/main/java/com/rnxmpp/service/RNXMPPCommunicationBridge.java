@@ -74,20 +74,18 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public void onMessage(Message message) {
         WritableMap params = Arguments.createMap();
 
-
         params.putString("_id", message.getStanzaId());
         params.putString("thread", message.getThread());
         params.putString("subject", message.getSubject());
         params.putString("from", message.getFrom().toString());
         params.putString("src", message.toXML("").toString());
-        if(message.getBody()!=null) {
+        if (message.getBody() != null) {
             params.putString("body", message.getBody());
             sendEvent(reactContext, RNXMPP_MESSAGE, params);
-        }
-        else {
-            boolean isChatState=message.hasExtension(ChatStateExtension.NAMESPACE);
-            if(isChatState){
-                ChatStateExtension extension= (ChatStateExtension) message.getExtension(ChatStateExtension.NAMESPACE);
+        } else {
+            boolean isChatState = message.hasExtension(ChatStateExtension.NAMESPACE);
+            if (isChatState) {
+                ChatStateExtension extension = (ChatStateExtension) message.getExtension(ChatStateExtension.NAMESPACE);
                 ChatState state = extension.getChatState();
                 WritableMap paramStatus = Arguments.createMap();
                 paramStatus.putString("from", message.getFrom().toString());
@@ -100,7 +98,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
 
     @Override
     public void onMessageIdGenerated(String messageId) {
-        Log.e("Message id is",messageId);
+        Log.e("Message id is", messageId);
         sendEvent(reactContext, RNXMPP_MESSAGE_ID_CREATED, messageId);
     }
 
