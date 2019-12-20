@@ -4,11 +4,6 @@ An XMPP library for React Native.
 
 A simple interface for native XMPP communication. Both iOS and Android are supported.
 
-## Demo
-
-XmppDemo uses a Flux approach (check its `XmppStore`) to communicate with a sample XMPP server, where 4 accounts were registered.
-
-![demo-3](https://cloud.githubusercontent.com/assets/1321329/10537760/406affa6-73f4-11e5-986f-81a78adf129e.gif)
 
 ## Example
 
