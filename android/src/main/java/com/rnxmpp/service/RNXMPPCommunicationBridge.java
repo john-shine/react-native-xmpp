@@ -1,6 +1,5 @@
 package com.rnxmpp.service;
 
-//import androidx.annotation.Nullable;
 import androidx.annotation.Nullable;
 import android.util.Log;
 

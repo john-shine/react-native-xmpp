@@ -2,6 +2,7 @@ package com.rnxmpp;
 
 import android.text.TextUtils;
 
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -70,8 +71,8 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
 
     @Override
     @ReactMethod
-    public void message(String text, String to, String thread){
-        this.xmppService.message(text, to, thread);
+    public void message(String text, String to, String thread, Promise promise){
+        this.xmppService.message(text, to, thread, promise);
     }
 
     @Override

@@ -128,7 +128,7 @@ class XMPP {
         React.NativeModules.RNXMPP.message(text, user, thread);
     }
 
-    messageUpdated(text, user,messageId, thread=null) {
+    messageUpdated(text, user, messageId, thread=null) {
         LOG(`Message: "${text}" being sent to user: ${user}`);
         React.NativeModules.RNXMPP.messageUpdated(text, user, thread,messageId);
     }

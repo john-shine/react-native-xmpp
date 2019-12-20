@@ -2,6 +2,7 @@ package com.rnxmpp.service;
 
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.Promise;
 
 /**
  * Created by Kristian Frølund on 7/19/16.
@@ -29,7 +30,7 @@ public interface XmppService {
     void leaveRoom(String mucJid);
 
     @ReactMethod
-    void message(String text, String to, String thread);
+    void message(String text, String to, String thread, Promise promise);
 
     @ReactMethod
     void messageUpdated(String text, String to, String thread,String messageId);

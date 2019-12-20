@@ -1,5 +1,6 @@
 package com.rnxmpp.service;
 
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReadableArray;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
@@ -221,7 +222,6 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         new ReconnectionTask().execute();
     }
 
-
     public void joinRoom(String roomJid, String userNickname,String lastMessage) {
         if (connection != null) {
             MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
@@ -285,7 +285,6 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
     public void sendRoomMessageUpdated(String roomJid, String text,String messageId) {
         MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
 
-
         try {
             MultiUserChat muc = mucManager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
             Message message = muc.createMessage();
@@ -299,7 +298,6 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
                    xmppServiceListener.onMessageSent(packet.getStanzaId());
                 }
             });
-
         } catch (SmackException e) {
             logger.log(Level.WARNING, "Could not send group message", e);
             xmppServiceListener.onDisconnect(null);
@@ -327,7 +325,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
     }
 
     @Override
-    public void message(String text, String to, String thread) {
+    public void message(String text, String to, String thread, Promise promise) {
         String chatIdentifier = (thread == null ? to : thread);
 
         ChatManager chatManager = ChatManager.getInstanceFor(connection);
@@ -351,18 +349,21 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
             connection.addStanzaIdAcknowledgedListener(message.getStanzaId(), new StanzaListener() {
                 @Override
-                public void processStanza(Stanza packet) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException {
-
-                }
+                public void processStanza(Stanza packet) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException {}
             });
+
+            promise.resolve(null);
 
         } catch (SmackException e) {
             logger.log(Level.WARNING, "Could not send message", e);
             xmppServiceListener.onDisconnect(null);
+            promise.reject(e.getMessage());
         } catch (InterruptedException e) {
             e.printStackTrace();
+            promise.reject(e.getMessage());
         } catch (XmppStringprepException e) {
             e.printStackTrace();
+            promise.reject(e.getMessage());
         }
     }
 
