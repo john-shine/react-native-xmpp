@@ -13,7 +13,6 @@ var map = {
     'loginError': 'RNXMPPLoginError',
     'login': 'RNXMPPLogin',
     'roster': 'RNXMPPRoster',
-    'messageCreated': 'RNXMPPMessageCreated',
     'messageDelivered':'RNXMPPMessageDelivered',
     'messageIDGenerated': 'RNXMPPMessageIdCreated',
     'messageSent':'RNXMPPMessageSent',
@@ -113,81 +112,79 @@ class XMPP {
     }
 
     trustHosts(hosts) {
-        React.NativeModules.RNXMPP.trustHosts(hosts);
+        return React.NativeModules.RNXMPP.trustHosts(hosts);
     }
 
     connect(username, password, auth = RNXMPP.SCRAMSHA1, hostname = null, port = 5222) {
         if (!hostname) {
-            hostname = (username+'@/').split('@')[1].split('/')[0];
+            hostname = (username + '@/').split('@')[1].split('/')[0];
         }
-        React.NativeModules.RNXMPP.connect(username, password, auth, hostname, port);
+        return React.NativeModules.RNXMPP.connect(username, password, auth, hostname, port);
     }
 
     message(text, user, thread = null) {
         LOG(`Message: "${text}" being sent to user: ${user}`);
-        React.NativeModules.RNXMPP.message(text, user, thread);
+        return React.NativeModules.RNXMPP.message(text, user, thread);
     }
 
     messageUpdated(text, user, messageId, thread=null) {
         LOG(`Message: "${text}" being sent to user: ${user}`);
-        React.NativeModules.RNXMPP.messageUpdated(text, user, thread,messageId);
+        return React.NativeModules.RNXMPP.messageUpdated(text, user, thread,messageId);
     }
 
     requestMessageid() {
-        React.NativeModules.RNXMPP.requestMessageId();
+        return React.NativeModules.RNXMPP.requestMessageId();
     }
 
     sendStanza(stanza) {
-        RNXMPP.sendStanza(stanza);
+        return RNXMPP.sendStanza(stanza);
     }
 
     fetchRoster() {
-        RNXMPP.fetchRoster();
+        return RNXMPP.fetchRoster();
     }
 
     presence(to, type) {
-        React.NativeModules.RNXMPP.presence(to, type);
+        return React.NativeModules.RNXMPP.presence(to, type);
     }
 
-    
-
     removeFromRoster(to) {
-        React.NativeModules.RNXMPP.removeRoster(to);
+        return React.NativeModules.RNXMPP.removeRoster(to);
     }
 
     createRosterEntry(to, name) {
-        React.NativeModules.RNXMPP.createRoasterEntry(to,name);
+        return React.NativeModules.RNXMPP.createRoasterEntry(to,name);
     }
 
     disconnect() {
         if (this.isConnected) {
-            React.NativeModules.RNXMPP.disconnect();
+            return React.NativeModules.RNXMPP.disconnect();
         }
     }
     disconnectAfterSending() {
-      if (this.isConnected) {
-        React.NativeModules.RNXMPP.disconnectAfterSending();
-      }
+        if (this.isConnected) {
+            return React.NativeModules.RNXMPP.disconnectAfterSending();
+        }
     }
 
     joinRoom(roomJID, nickname, lastMessageTimeStamp) {
-        React.NativeModules.RNXMPP.joinRoom(roomJID, nickname,lastMessageTimeStamp);
+        return React.NativeModules.RNXMPP.joinRoom(roomJID, nickname,lastMessageTimeStamp);
     }
 
     sendRoomMessage(message, roomJID) {
-        React.NativeModules.RNXMPP.sendRoomMessage(message, roomJID);
+        return React.NativeModules.RNXMPP.sendRoomMessage(message, roomJID);
     }
 
     sendRoomMessageUpdated(message, roomJID, messageId) {
-        React.NativeModules.RNXMPP.sendRoomMessageUpdated(message, roomJID,messageId);
+        return React.NativeModules.RNXMPP.sendRoomMessageUpdated(message, roomJID,messageId);
     }
 
     leaveRoom(roomJID) {
-        React.NativeModules.RNXMPP.leaveRoom(roomJID);
+        return React.NativeModules.RNXMPP.leaveRoom(roomJID);
     }
 
     sendComposingState(user, thread = null, state) {
-        React.NativeModules.RNXMPP.sendComposingState(user,thread,state);
+        return React.NativeModules.RNXMPP.sendComposingState(user,thread,state);
     }
 }
 

@@ -44,7 +44,6 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public static final String RNXMPP_DISCONNECT =  "RNXMPPDisconnect";
     public static final String RNXMPP_LOGIN =       "RNXMPPLogin";
     public static final String RNXMPP_TYPINGSTATUS =       "RNXMPPTypingStatus";
-    public static final String RNXMPP_MESSAGE_CREATED =       "RNXMPPMessageCreated";
     public static final String RNXMPP_MESSAGE_ID_CREATED =       "RNXMPPMessageIdCreated";
     public static final String RNXMPP_MESSAGE_SENT =       "RNXMPPMessageSent";
 
@@ -104,18 +103,6 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     @Override
     public void onMessageSent(String messageId) {
         sendEvent(reactContext, RNXMPP_MESSAGE_SENT, messageId);
-    }
-
-    @Override
-    public void onMessageCreated(Message message) {
-        WritableMap params = Arguments.createMap();
-        params.putString("_id", message.getStanzaId());
-        params.putString("thread", message.getThread());
-        params.putString("subject", message.getSubject());
-        params.putString("body", message.getBody());
-        params.putString("from", message.getFrom().toString());
-        params.putString("src", message.toXML("").toString());
-        sendEvent(reactContext, RNXMPP_MESSAGE_CREATED, params);
     }
 
     @Override

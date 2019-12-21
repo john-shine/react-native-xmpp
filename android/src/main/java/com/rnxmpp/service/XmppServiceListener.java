@@ -17,7 +17,6 @@ public interface XmppServiceListener {
     void onMessage(Message message);
     void onMessageIdGenerated(String messageId);
     void onMessageSent(String messageId);
-    void onMessageCreated(Message message);
     void onMessageDelivered(String messageId);
     void onRosterReceived(Roster roster);
     void onIQ(IQ iq);
