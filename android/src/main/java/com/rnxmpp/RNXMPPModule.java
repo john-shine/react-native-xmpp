@@ -28,7 +28,8 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
 
     public RNXMPPModule(ReactApplicationContext reactContext) {
         super(reactContext);
-        xmppService = new XmppServiceSmackImpl(new RNXMPPCommunicationBridge(reactContext));
+        RNXMPPCommunicationBridge listener = new RNXMPPCommunicationBridge(reactContext);
+        xmppService = new XmppServiceSmackImpl(listener);
     }
 
     @Override
@@ -44,53 +45,53 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
 
     @Override
     @ReactMethod
-    public void connect(String jid, String password, String authMethod, String hostname, Integer port){
-        this.xmppService.connect(jid, password, authMethod, hostname, port);
+    public void connect(String jid, String password, String authMethod, String hostname, Integer port, Promise promise){
+        this.xmppService.connect(jid, password, authMethod, hostname, port, promise);
     }
 
     @ReactMethod
-    public void joinRoom(String mucJid, String userNickname,String timestamp) {
+    public void joinRoom(String mucJid, String userNickname, String timestamp, Promise promise) {
         if(!TextUtils.isEmpty(userNickname))
-        this.xmppService.joinRoom(mucJid, userNickname,timestamp);
+        this.xmppService.joinRoom(mucJid, userNickname, timestamp, promise);
     }
 
     @ReactMethod
-    public void sendRoomMessage(String mucJid, String text) {
-        this.xmppService.sendRoomMessage(mucJid, text);
+    public void leaveRoom(String mucJid, Promise promise) {
+        this.xmppService.leaveRoom(mucJid, promise);
     }
 
     @ReactMethod
-    public void sendRoomMessageUpdated(String mucJid, String text,String messageId) {
-        this.xmppService.sendRoomMessageUpdated(mucJid, text,messageId);
+    public void sendRoomMessage(String mucJid, String text, Promise promise) {
+        this.xmppService.sendRoomMessage(mucJid, text, promise);
     }
 
     @ReactMethod
-    public void leaveRoom(String mucJid) {
-        this.xmppService.leaveRoom(mucJid);
-    }
-
-    @Override
-    @ReactMethod
-    public void message(String text, String to, String thread, Promise promise){
-        this.xmppService.message(text, to, thread, promise);
+    public void sendRoomMessageUpdated(String mucJid, String text, String messageId, Promise promise) {
+        this.xmppService.sendRoomMessageUpdated(mucJid, text, messageId, promise);
     }
 
     @Override
     @ReactMethod
-    public void messageUpdated(String text, String to, String thread, String messageId) {
-        this.xmppService.messageUpdated(text, to, thread,messageId);
+    public void sendMessage(String text, String to, String thread, Promise promise){
+        this.xmppService.sendMessage(text, to, thread, promise);
     }
 
     @Override
     @ReactMethod
-    public void presence(String to, String type) {
-        this.xmppService.presence(to, type);
+    public void sendMessageUpdated(String text, String to, String thread, String messageId, Promise promise) {
+        this.xmppService.sendMessageUpdated(text, to, thread, messageId, promise);
     }
 
     @Override
     @ReactMethod
-    public void removeRoster(String to) {
-        this.xmppService.removeRoster(to);
+    public void presence(String to, String type, Promise promise) {
+        this.xmppService.presence(to, type, promise);
+    }
+
+    @Override
+    @ReactMethod
+    public void removeRoster(String to, Promise promise) {
+        this.xmppService.removeRoster(to, promise);
     }
 
     @Override
@@ -101,32 +102,32 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
 
     @Override
     @ReactMethod
-    public void fetchRoster() {
-        this.xmppService.fetchRoster();
+    public void fetchRoster(Promise promise) {
+        this.xmppService.fetchRoster(promise);
     }
 
     @Override
     @ReactMethod
-    public void sendStanza(String stanza) {
-        this.xmppService.sendStanza(stanza);
+    public void sendStanza(String stanza, Promise promise) {
+        this.xmppService.sendStanza(stanza, promise);
     }
 
     @Override
     @ReactMethod
-    public void createRoasterEntry(String jabberId, String name) {
-        this.xmppService.createRoasterEntry(jabberId,name);
+    public void createRoasterEntry(String jabberId, String name, Promise promise) {
+        this.xmppService.createRoasterEntry(jabberId, name, promise);
     }
 
     @Override
     @ReactMethod
-    public void sendComposingState(String to, String thread,String state) {
-        this.xmppService.sendComposingState(to,thread,state);
+    public void sendComposingState(String to, String thread, String state, Promise promise) {
+        this.xmppService.sendComposingState(to, thread, state, promise);
     }
 
     @Override
     @ReactMethod
     public void requestMessageId() {
-      this.xmppService.requestMessageId();
+        this.xmppService.requestMessageId();
     }
 
 }

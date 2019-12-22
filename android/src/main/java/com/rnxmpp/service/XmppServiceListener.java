@@ -11,17 +11,14 @@ import org.jivesoftware.smack.roster.Roster;
  */
 
 public interface XmppServiceListener {
-    void onError(Exception e);
-    void onLoginError(String errorMessage);
-    void onLoginError(Exception e);
-    void onMessage(Message message);
     void onMessageIdGenerated(String messageId);
-    void onMessageSent(String messageId);
+    void onMessageReceived(Message message);
     void onMessageDelivered(String messageId);
+    void onGroupMessageReceived(Message message);
     void onRosterReceived(Roster roster);
     void onIQ(IQ iq);
-    void onPresence(Presence presence);
-    void onConnnect(String username, String password);
-    void onDisconnect(Exception e);
-    void onLogin(String username, String password);
+    void onPresenced(Presence presence);
+    void onConnnected(String username, String password);
+    void onAuthenticated(String username, String password);
+    void onDisconnected(Exception e);
 }

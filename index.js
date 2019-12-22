@@ -4,20 +4,16 @@ var {NativeAppEventEmitter, NativeModules} = React;
 var RNXMPP = NativeModules.RNXMPP;
 
 var map = {
-    'message' : 'RNXMPPMessage',
-    'iq': 'RNXMPPIQ',
-    'presence': 'RNXMPPPresence',
-    'connect': 'RNXMPPConnect',
-    'disconnect': 'RNXMPPDisconnect',
-    'error': 'RNXMPPError',
-    'loginError': 'RNXMPPLoginError',
-    'login': 'RNXMPPLogin',
+    'connected': 'RNXMPPConnected',
+    'authenticated': 'RNXMPPAuthenticated',
+    'disconnected': 'RNXMPPDisconnected',
+    'IQ': 'RNXMPPIQ',
     'roster': 'RNXMPPRoster',
+    'presence': 'RNXMPPPresenced',
+    'messageIDGenerated': 'RNXMPPMessageIdGenerated',
+    'messageReceived' : 'RNXMPPMessageReceived',
     'messageDelivered':'RNXMPPMessageDelivered',
-    'messageIDGenerated': 'RNXMPPMessageIdCreated',
-    'messageSent':'RNXMPPMessageSent',
-    'typingStatus':'RNXMPPTypingStatus',
-    
+    'typingStatus':'RNXMPPTypingStatus'
 }
 
 const LOG = (message) => {
@@ -31,42 +27,29 @@ class XMPP {
     SCRAM = RNXMPP.SCRAMSHA1;
     MD5 = RNXMPP.DigestMD5;
     
-
     constructor() {
         this.isConnected = false;
         this.isLogged = false;
-        this.listeners = [
-            NativeAppEventEmitter.addListener(map.connect, this.onConnected.bind(this)),
-            NativeAppEventEmitter.addListener(map.disconnect, this.onDisconnected.bind(this)),
-            NativeAppEventEmitter.addListener(map.error, this.onError.bind(this)),
-            NativeAppEventEmitter.addListener(map.loginError, this.onLoginError.bind(this)),
-            NativeAppEventEmitter.addListener(map.login, this.onLogin.bind(this)),
-        ];
-    }
-
-    onConnected() {
-        LOG("Connected");
-        this.isConnected = true;
-    }
-
-    onLogin() {
-        LOG("Login");
-        this.isLogged = true;
-    }
-
-    onDisconnected(error) {
-        LOG("Disconnected, error: "+error);
-        this.isConnected = false;
-        this.isLogged = false;
-    }
-
-    onError(text) {
-        LOG("Error: "+text);
-    }
-
-    onLoginError(text) {
-        this.isLogged = false;
-        LOG("LoginError: "+text);
+        for (let type in map) {
+            if (map[type] === 'connected') {
+                var callback = (username, password) => {
+                    LOG("Connected");
+                    this.isConnected = true;
+                }
+            } else if (map[type] == 'disconnected') {
+                var callback = () => {
+                    LOG("Disconnected, error: " + error);
+                    this.isConnected = false;
+                    this.isLogged = false;
+                }
+            } else {
+                var callback = () => {
+                    LOG(type);
+                };
+            }
+            let listener = NativeAppEventEmitter.addListener(type, callback.bind(this));
+            this.listeners.push(listener)
+        }
     }
 
     on(type, callback) {
@@ -81,11 +64,11 @@ class XMPP {
 
     removeListener(type) {
         if (map[type]) {
-            for (var i = 0; i < this.listeners.length; i++) {
-                var listener = this.listeners[i];
+            for (let i = 0; i < this.listeners.length; i++) {
+                let listener = this.listeners[i];
                 if (listener.eventType === map[type]) {
                     listener.remove();
-                    var index = this.listeners.indexOf(listener);
+                    let index = this.listeners.indexOf(listener);
                     if (index > -1) {
                         this.listeners.splice(index, 1);
                     }
@@ -96,17 +79,11 @@ class XMPP {
     }
 
     removeListeners() {
-        for (var i = 0; i < this.listeners.length; i++) {
+        for (let i = 0; i < this.listeners.length; i++) {
             this.listeners[i].remove();
         }
 
-        this.listeners = [
-            NativeAppEventEmitter.addListener(map.connect, this.onConnected.bind(this)),
-            NativeAppEventEmitter.addListener(map.disconnect, this.onDisconnected.bind(this)),
-            NativeAppEventEmitter.addListener(map.error, this.onError.bind(this)),
-            NativeAppEventEmitter.addListener(map.loginError, this.onLoginError.bind(this)),
-            NativeAppEventEmitter.addListener(map.login, this.onLogin.bind(this)),
-        ];
+        this.listeners = [];
         
         LOG('All event listeners removed');
     }
@@ -122,14 +99,14 @@ class XMPP {
         return React.NativeModules.RNXMPP.connect(username, password, auth, hostname, port);
     }
 
-    message(text, user, thread = null) {
+    sendMessage(text, user, thread = null) {
         LOG(`Message: "${text}" being sent to user: ${user}`);
-        return React.NativeModules.RNXMPP.message(text, user, thread);
+        return React.NativeModules.RNXMPP.sendMessage(text, user, thread);
     }
 
-    messageUpdated(text, user, messageId, thread=null) {
+    sendMessageUpdated(text, user, messageId, thread=null) {
         LOG(`Message: "${text}" being sent to user: ${user}`);
-        return React.NativeModules.RNXMPP.messageUpdated(text, user, thread,messageId);
+        return React.NativeModules.RNXMPP.sendMessageUpdated(text, user, thread,messageId);
     }
 
     requestMessageid() {

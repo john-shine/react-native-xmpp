@@ -12,51 +12,51 @@ import com.facebook.react.bridge.Promise;
 public interface XmppService {
 
     @ReactMethod
-    public void trustHosts(ReadableArray trustedHosts);
+    void trustHosts(ReadableArray trustedHosts);
 
     @ReactMethod
-    void connect(String jid, String password, String authMethod, String hostname, Integer port);
+    void connect(String jid, String password, String authMethod, String hostname, Integer port, Promise promise);
 
     @ReactMethod
-    void joinRoom(String mucJid, String userNickname,String lastMessage);
+    void sendMessage(String text, String to, String thread, Promise promise);
 
     @ReactMethod
-    void sendRoomMessage(String roomJid, String text);
+    void sendMessageUpdated(String text, String to, String thread,String messageId, Promise promise);
 
     @ReactMethod
-    void sendRoomMessageUpdated(String roomJid, String text,String messageId);
+    void presence(String to, String type, Promise promise);
 
     @ReactMethod
-    void leaveRoom(String mucJid);
-
-    @ReactMethod
-    void message(String text, String to, String thread, Promise promise);
-
-    @ReactMethod
-    void messageUpdated(String text, String to, String thread,String messageId);
-
-    @ReactMethod
-    void presence(String to, String type);
-
-    @ReactMethod
-    void removeRoster(String to);
+    void removeRoster(String to, Promise promise);
 
     @ReactMethod
     void disconnect();
 
     @ReactMethod
-    void fetchRoster();
+    void fetchRoster(Promise promise);
 
     @ReactMethod
-    void sendStanza(String stanza);
+    void sendStanza(String stanza, Promise promise);
 
     @ReactMethod
-    void createRoasterEntry(String jabberId,String name);
+    void createRoasterEntry(String jabberId, String name, Promise promise);
 
     @ReactMethod
-    void sendComposingState(String to, String thread,String state);
+    void sendComposingState(String to, String thread, String state, Promise promise);
 
     @ReactMethod
     void requestMessageId();
+
+    @ReactMethod
+    void joinRoom(String mucJid, String userNickname, String lastMessage, Promise promise);
+
+    @ReactMethod
+    void leaveRoom(String mucJid, Promise promise);
+
+    @ReactMethod
+    void sendRoomMessage(String roomJid, String text, Promise promise);
+
+    @ReactMethod
+    void sendRoomMessageUpdated(String roomJid, String text, String messageId, Promise promise);
 
 }

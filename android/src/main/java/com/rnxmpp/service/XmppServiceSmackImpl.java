@@ -48,6 +48,7 @@ import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
+import org.jivesoftware.smack.MessageListener;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -64,9 +65,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Handler;
+// import java.util.concurrent.ScheduledThreadPoolExecutor;
+// import java.util.concurrent.TimeUnit;
+// import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -79,10 +80,15 @@ import javax.net.ssl.SSLSession;
  * Copyright (c) 2016. Teletronics. All rights reserved
  */
 
-public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, ChatManagerListener, StanzaListener, ConnectionListener, ChatStateListener, RosterLoadedListener,ReceiptReceivedListener {
+public class XmppServiceSmackImpl implements XmppService, ChatMessageListener, ChatManagerListener, StanzaListener, ConnectionListener, ChatStateListener, RosterLoadedListener, ReceiptReceivedListener {
     XmppServiceListener xmppServiceListener;
+    MessageListener groupMessageListner = new MessageListener() {
+        @Override
+        public void processMessage(Message message) {
+            xmppServiceListener.onGroupMessageReceived(message);
+        }
+    };
     Logger logger = Logger.getLogger(XmppServiceSmackImpl.class.getName());
-    XmppGroupMessageListenerImpl groupMessageListner;
 
     XMPPTCPConnection connection;
     Roster roster;
@@ -100,51 +106,37 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         }
     }
 
-
-    public static InetAddress getInetAddressByName(String name)
-    {
-        AsyncTask<String, Void, InetAddress> task = new AsyncTask<String, Void, InetAddress>()
-        {
+    public static InetAddress getInetAddressByName(String name) {
+        AsyncTask<String, Void, InetAddress> task = new AsyncTask<String, Void, InetAddress>() {
 
             @Override
-            protected InetAddress doInBackground(String... params)
-            {
-                try
-                {
+            protected InetAddress doInBackground(String... params) {
+                try {
                     return InetAddress.getByName(params[0]);
-                }
-                catch (UnknownHostException e)
-                {
+                } catch (UnknownHostException e) {
                     return null;
                 }
             }
         };
 
-        try
-        {
+        try {
             return task.execute(name).get();
-        }
-        catch (InterruptedException e)
-        {
-            return null;
-        }
-        catch (ExecutionException e)
-        {
+        } catch (InterruptedException | ExecutionException e) {
             return null;
         }
 
     }
 
-    String username ="",password1="";
+    String username ="", password1="";
     @Override
-    public void connect(String jid, String password, String authMethod, String hostname, Integer port) {
+    public void connect(String jid, String password, String authMethod, String hostname, Integer port, Promise promise) {
         final String[] jidParts = jid.split("@");
         String[] serviceNameParts = jidParts[1].split("/");
         String serviceName = serviceNameParts[0];
-        DomainBareJid serName=null;
+        DomainBareJid serverName = null;
 
         try {
-            serName = JidCreate.domainBareFrom(serviceName);
+            serverName = JidCreate.domainBareFrom(serviceName);
         } catch (XmppStringprepException e) {
             e.printStackTrace();
         }
@@ -160,12 +152,11 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
                 }
             };
 
-
             username = jidParts[0];
             this.password1 = password;
             confBuilder = XMPPTCPConnectionConfiguration.builder()
                     .setUsernameAndPassword(jidParts[0], password)
-                    .setXmppDomain(serName)
+                    .setXmppDomain(serverName)
                     .setConnectTimeout(20000)
                     .setHostnameVerifier(verifier)
                     .setHostAddress(inetAddress)
@@ -219,41 +210,58 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         ChatManager.getInstanceFor(connection).addChatListener(this);
         roster = Roster.getInstanceFor(connection);
         roster.addRosterLoadedListener(this);
-        new ReconnectionTask().execute();
+        new ReconnectionTask().execute(promise);
     }
 
-    public void joinRoom(String roomJid, String userNickname,String lastMessage) {
-        if (connection != null) {
+    public void joinRoom(String roomJid, String userNickname, String lastMessage, Promise promise) {
+        try {
             MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
-            try {
-                MultiUserChat muc = manager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
-                try {
-                    Log.e("Date is", lastMessage);
-                    DiscussionHistory history = new DiscussionHistory();
-                    Calendar c = Calendar.getInstance();
-                    long val = Long.parseLong(lastMessage);
-                    c.setTimeInMillis(val);
-                    c.add(Calendar.SECOND, 1);
-                    history.setSince(c.getTime());
-                    Log.e("Date is", "" + c.getTime());
-                    //history.setMaxStanzas(0);
+            MultiUserChat muc = manager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
 
-                    if (muc.isJoined()) {
-                        sendOnlinePresence(muc, roomJid, userNickname, c.getTime());
-                    } else {
-                        muc.join(Resourcepart.fromOrNull(userNickname), "", history, connection.getReplyTimeout());
-                        groupMessageListner = new XmppGroupMessageListenerImpl(this.xmppServiceListener, logger);
-                        muc.addMessageListener(groupMessageListner);
-                    }
-                } catch (SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
-                    logger.log(Level.WARNING, "Could not join chat room", e);
-                }
+            logger.log(Level.INFO, "last message: " + lastMessage);
+            DiscussionHistory history = new DiscussionHistory();
+            Calendar calendar = Calendar.getInstance();
+            long val = Long.parseLong(lastMessage);
+            calendar.setTimeInMillis(val);
+            calendar.add(Calendar.SECOND, 1);
+            history.setSince(calendar.getTime());
+            logger.log(Level.INFO, "Date is" + calendar.getTime());
+            // history.setMaxStanzas(0);
+
+            if (muc.isJoined()) {
+                sendOnlinePresence(muc, roomJid, userNickname, calendar.getTime());
+            } else {
+                muc.join(Resourcepart.fromOrNull(userNickname), "", history, connection.getReplyTimeout());
+                muc.addMessageListener(this.groupMessageListner);
             }
-            catch (Exception e){}
+            promise.resolve(null);
+        } catch (SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
+            e.printStackTrace();
+            logger.log(Level.WARNING, "Could not join chat room", e);
+            promise.reject(e.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.log(Level.WARNING, "Could not join chat room", e);
+            promise.reject(e.toString());
         }
     }
 
-    private void sendOnlinePresence(MultiUserChat muc,String room,String nickname,Date date ){
+    public void leaveRoom(String roomJid, Promise promise) {
+        MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
+
+        try {
+            MultiUserChat muc = mucManager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
+            muc.leave();
+            muc.removeMessageListener(this.groupMessageListner);
+            promise.resolve(null);
+        } catch (SmackException | InterruptedException | XmppStringprepException e) {
+            e.printStackTrace();
+            logger.log(Level.WARNING, "Could not leave chat room: " + roomJid, e);
+            promise.reject(e.toString());
+        }
+    }
+
+    private void sendOnlinePresence(MultiUserChat muc, String room, String nickname, Date date) {
         Presence joinPresence = new Presence(Presence.Type.available);
         joinPresence.setTo(room + "/" + nickname);
         MUCInitialPresence mucInitialPresence = new MUCInitialPresence();
@@ -263,26 +271,24 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         joinPresence.addExtension(mucInitialPresence);
         try {
             connection.sendStanza(joinPresence);
-        }
-        catch (Exception e){}
+        } catch (Exception e) {}
     }
 
-    public void sendRoomMessage(String roomJid, String text) {
+    public void sendRoomMessage(String roomJid, String text, Promise promise) {
         MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
 
         try {
             MultiUserChat muc = mucManager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
             muc.sendMessage(text);
-        } catch (SmackException e) {
+            promise.resolve(null);
+        } catch (SmackException | InterruptedException | XmppStringprepException e) {
+            e.printStackTrace();
             logger.log(Level.WARNING, "Could not send group message", e);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
+            promise.reject(e.toString());
         }
     }
 
-    public void sendRoomMessageUpdated(String roomJid, String text,String messageId) {
+    public void sendRoomMessageUpdated(String roomJid, String text, final String messageId, final Promise promise) {
         MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
 
         try {
@@ -295,37 +301,18 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             connection.addStanzaIdAcknowledgedListener(messageId, new StanzaListener() {
                 @Override
                 public void processStanza(Stanza packet) throws SmackException.NotConnectedException {
-                   xmppServiceListener.onMessageSent(packet.getStanzaId());
+                   promise.resolve(null);
                 }
             });
-        } catch (SmackException e) {
+        } catch (SmackException | InterruptedException | XmppStringprepException e) {
+            e.printStackTrace();
             logger.log(Level.WARNING, "Could not send group message", e);
-            xmppServiceListener.onDisconnect(null);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void leaveRoom(String roomJid) {
-        MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
-
-        try {
-            MultiUserChat muc = mucManager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
-            muc.leave();
-            muc.removeMessageListener(groupMessageListner);
-        } catch (SmackException e) {
-            logger.log(Level.WARNING, "Could not leave chat room", e);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
+            promise.reject(e.toString());
         }
     }
 
     @Override
-    public void message(String text, String to, String thread, Promise promise) {
+    public void sendMessage(String text, String to, String thread, final Promise promise) {
         String chatIdentifier = (thread == null ? to : thread);
 
         ChatManager chatManager = ChatManager.getInstanceFor(connection);
@@ -345,30 +332,24 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             message.setFrom(connection.getUser());
 
             chat.sendMessage(message);
-            this.xmppServiceListener.onMessageCreated(message);
+            message.setBody(text);
+            message.setFrom(connection.getUser());
 
             connection.addStanzaIdAcknowledgedListener(message.getStanzaId(), new StanzaListener() {
                 @Override
-                public void processStanza(Stanza packet) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException {}
+                public void processStanza(Stanza packet) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException {
+                    promise.resolve(null);
+                }
             });
 
-            promise.resolve(null);
-
-        } catch (SmackException e) {
-            logger.log(Level.WARNING, "Could not send message", e);
-            xmppServiceListener.onDisconnect(null);
-            promise.reject(e.getMessage());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            promise.reject(e.getMessage());
-        } catch (XmppStringprepException e) {
+        } catch (SmackException | InterruptedException | XmppStringprepException e) {
             e.printStackTrace();
             promise.reject(e.getMessage());
         }
     }
 
     @Override
-    public void messageUpdated(String text, String to, String thread, String messageId) {
+    public void sendMessageUpdated(String text, String to, String thread, final String messageId, final Promise promise) {
         String chatIdentifier = (thread == null ? to : thread);
 
         ChatManager chatManager = ChatManager.getInstanceFor(connection);
@@ -392,84 +373,85 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             connection.addStanzaIdAcknowledgedListener(messageId, new StanzaListener() {
                 @Override
                 public void processStanza(Stanza packet) throws SmackException.NotConnectedException {
-                    xmppServiceListener.onMessageSent(packet.getStanzaId());
+                    promise.resolve(null);
                 }
             });
 
-        } catch (SmackException e) {
+        } catch (SmackException | InterruptedException | XmppStringprepException e) {
+            e.printStackTrace();
             logger.log(Level.WARNING, "Could not send message", e);
-            xmppServiceListener.onDisconnect(null);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
+            promise.reject(e.toString());
         }
     }
 
-    private String generateMessage(){
+    private String generateMessageId(){
          Message message = new Message();
          return message.getStanzaId();
     }
 
     @Override
-    public void presence(String to, String type) {
+    public void presence(String to, String type, Promise promise) {
         try {
-            if (connection != null) {
-                connection.sendStanza(new Presence(Presence.Type.fromString(type), type, 1, Presence.Mode.available));
-            }
-        } catch (SmackException.NotConnectedException e) {
-            logger.log(Level.WARNING, "Could not send presence", e);
-            // xmppServiceListener.onDisconnect(null);
-        } catch (InterruptedException e) {
+            connection.sendStanza(new Presence(Presence.Type.fromString(type), type, 1, Presence.Mode.available));
+            promise.resolve(null);
+        } catch (SmackException.NotConnectedException | InterruptedException e) {
             e.printStackTrace();
+            logger.log(Level.WARNING, "Could not send presence", e);
+            promise.reject(e.toString());
         }
     }
 
     @Override
-    public void removeRoster(String to) {
+    public void removeRoster(String to, Promise promise) {
         Roster roster = Roster.getInstanceFor(connection);
         RosterEntry rosterEntry = null;
         try {
             rosterEntry = roster.getEntry(JidCreate.entityBareFrom(to));
         } catch (Exception e) {
-
+            e.printStackTrace();
+            logger.log(Level.WARNING, "Could not get roster entry: " + to);
+            promise.reject(e.toString());
         }
 
         if (rosterEntry != null){
             try {
                 roster.removeEntry(rosterEntry);
-            } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
-                logger.log(Level.WARNING, "Could not remove roster entry: " + to);
-            } catch (InterruptedException e) {
+            } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException | InterruptedException e) {
                 e.printStackTrace();
+                logger.log(Level.WARNING, "Could not remove roster entry: " + to);
+                promise.reject(e.toString());
             }
         }
+
+        promise.resolve(null);
     }
 
     @Override
-    public void createRoasterEntry(String jabberId, String name) {
+    public void createRoasterEntry(String jabberId, String name, Promise promise) {
         Roster roster = Roster.getInstanceFor(connection);
-        RosterEntry rosterEntry =null;
+        RosterEntry rosterEntry = null;
         try {
             rosterEntry = roster.getEntry(JidCreate.entityBareFrom(jabberId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.log(Level.WARNING, "Could not get roster entry: " + jabberId);
+            promise.reject(e.toString());
         }
-        catch (Exception e){}
 
-        if (rosterEntry == null){
+        if (rosterEntry == null) {
             try {
-               roster.createEntry(JidCreate.entityBareFrom(jabberId),name,null);
-            } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
-                logger.log(Level.WARNING, "Could not remove roster entry: ");
-            } catch (InterruptedException e) {
+               roster.createEntry(JidCreate.entityBareFrom(jabberId), name,null);
+            } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException | InterruptedException | XmppStringprepException e) {
                 e.printStackTrace();
-            } catch (XmppStringprepException e) {
-                e.printStackTrace();
+                logger.log(Level.WARNING, "Could not remove roster entry: " + jabberId);
+                promise.reject(e.toString());
             }
         }
+        promise.resolve(null);
     }
 
     @Override
-    public void sendComposingState(String to, String thread,String state) {
+    public void sendComposingState(String to, String thread, String state, Promise promise) {
         String chatIdentifier = (thread == null ? to : thread);
 
         ChatManager chatManager = ChatManager.getInstanceFor(connection);
@@ -496,49 +478,47 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
             chat.sendMessage(message);
 
-            // this.xmppServiceListener.onMessageCreated(message);
-        } catch (SmackException e) {
+            promise.resolve(null);
+        } catch (SmackException | XmppStringprepException | InterruptedException e) {
+            e.printStackTrace();
             logger.log(Level.WARNING, "Could not send message", e);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
+            promise.reject(e.toString());
         }
     }
 
     @Override
     public void requestMessageId() {
-        xmppServiceListener.onMessageIdGenerated(generateMessage());
+        xmppServiceListener.onMessageIdGenerated(generateMessageId());
     }
 
     @Override
     public void disconnect() {
         connection.disconnect();
-        xmppServiceListener.onDisconnect(null);
+        xmppServiceListener.onDisconnected(null);
     }
 
     @Override
-    public void fetchRoster() {
+    public void fetchRoster(Promise promise) {
         try {
             roster.reload();
-        } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException e) {
-            logger.log(Level.WARNING, "Could not fetch roster", e);
-        } catch (InterruptedException e) {
+            promise.resolve(null);
+        } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException | InterruptedException e) {
             e.printStackTrace();
+            logger.log(Level.WARNING, "Could not fetch roster", e);
+            promise.reject(e.toString());
         }
     }
 
     @Override
     public void stateChanged(org.jivesoftware.smack.chat2.Chat chat, ChatState state, Message message) {
-        String name=chat.getXmppAddressOfChatPartner().asEntityBareJidString();
-        String stateData="";
-        if(state==ChatState.composing){
-            stateData=name+" is typing";
+        String name = chat.getXmppAddressOfChatPartner().asEntityBareJidString();
+        String stateData = "";
+        if (state == ChatState.composing) {
+            stateData = name + " is typing";
+        } else {
+            stateData = name + " stopped typing";
         }
-        else {
-            stateData=name+" stopped typing";
-        }
-        Log.e("State",name);
+        logger.log(Level.INFO, "State: " + stateData);
     }
 
     @Override
@@ -547,12 +527,12 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
     }
 
     public class StanzaPacket extends org.jivesoftware.smack.packet.Stanza {
-         private String xmlString;
+        private String xmlString;
 
-         public StanzaPacket(String xmlString) {
-             super();
-             this.xmlString = xmlString;
-         }
+        public StanzaPacket(String xmlString) {
+            super();
+            this.xmlString = xmlString;
+        }
 
         @Override
         public String toString() {
@@ -568,14 +548,15 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
     }
 
     @Override
-    public void sendStanza(String stanza) {
+    public void sendStanza(String stanza, Promise promise) {
         StanzaPacket packet = new StanzaPacket(stanza);
         try {
             connection.sendStanza(packet);
-        } catch (SmackException e) {
-            logger.log(Level.WARNING, "Could not send stanza", e);
-        } catch (InterruptedException e) {
+            promise.resolve(null);
+        } catch (SmackException | InterruptedException e) {
             e.printStackTrace();
+            logger.log(Level.WARNING, "Could not send stanza", e);
+            promise.reject(e.toString());
         }
     }
 
@@ -590,25 +571,15 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         if (packet instanceof IQ) {
             this.xmppServiceListener.onIQ((IQ) packet);
         } else if (packet instanceof Presence) {
-            this.xmppServiceListener.onPresence((Presence) packet);
+            this.xmppServiceListener.onPresenced((Presence) packet);
         } else {
             logger.log(Level.WARNING, "Got a Stanza, of unknown subclass", packet.toXML("").toString());
         }
     }
 
     @Override
-    public void connected(XMPPConnection connection) {
-        this.xmppServiceListener.onConnnect(username, password1);
-    }
-
-    @Override
-    public void authenticated(XMPPConnection connection, boolean resumed) {
-        this.xmppServiceListener.onLogin(connection.getUser().toString(), password);
-    }
-
-    @Override
     public void processMessage(Chat chat, Message message) {
-        this.xmppServiceListener.onMessage(message);
+        this.xmppServiceListener.onMessageReceived(message);
         logger.log(Level.INFO, "Received a new message", message.toString());
     }
 
@@ -623,48 +594,53 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
     }
 
     @Override
-    public void connectionClosedOnError(Exception e) {
-        this.xmppServiceListener.onDisconnect(e);
+    public void connected(XMPPConnection connection) {
+        this.xmppServiceListener.onConnnected(username, password1);
+    }
+
+    @Override
+    public void authenticated(XMPPConnection connection, boolean resumed) {
+        this.xmppServiceListener.onAuthenticated(connection.getUser().toString(), password);
     }
 
     @Override
     public void connectionClosed() {
         logger.log(Level.INFO, "Connection was closed.");
-        xmppServiceListener.onDisconnect( null);
-       // new ReconnectionTask().execute();
+        xmppServiceListener.onDisconnected( null);
+        // new ReconnectionTask().execute();
     }
 
-    class ReconnectionTask extends AsyncTask<Void,Void,Void>{
+    @Override
+    public void connectionClosedOnError(Exception e) {
+        logger.log(Level.WARNING, "Connection closed with error", e);
+        this.xmppServiceListener.onDisconnected(e);
+    }
+
+    class ReconnectionTask extends AsyncTask<Promise,Void,Void> {
 
         @Override
-        protected Void doInBackground(Void... voids) {
+        protected Void doInBackground(Promise... promises) {
             try {
                 ReconnectionManager manager = ReconnectionManager.getInstanceFor(connection);
-                manager.setFixedDelay(12);
+                manager.setFixedDelay(5);
                 manager.enableAutomaticReconnection();
                 ReconnectionManager.setEnabledPerDefault(true);
-
-            } catch (Exception e) {
-                // logger.log(Level.SEVERE, "Could not login for user " + jidParts[0], e);
-                if (e instanceof SASLErrorException) {
-                    XmppServiceSmackImpl.this.xmppServiceListener.onLoginError(((SASLErrorException) e).getSASLFailure().toString());
-                } else {
-                    XmppServiceSmackImpl.this.xmppServiceListener.onError(e);
-                }
-
-            }
-
-            try {
                 connection.connect().login();
-            } catch (XMPPException e) {
+            } catch (XMPPException | SmackException | IOException | InterruptedException e) {
                 e.printStackTrace();
-            } catch (SmackException e) {
+                logger.log(Level.SEVERE, "Could not login for current user", e);
+                promises[0].reject(e.toString());
+            } catch (Exception e) {
                 e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.log(Level.SEVERE, "Could not login for current user", e);
+                if (e instanceof SASLErrorException) {
+                    promises[0].reject(((SASLErrorException) e).getSASLFailure().toString());
+                } else {
+                    promises[0].reject(e.toString());
+                }
             }
+
+            promises[0].resolve(null);
 
             return null;
         }
