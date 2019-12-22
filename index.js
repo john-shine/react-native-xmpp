@@ -34,11 +34,11 @@ class XMPP {
         for (let type in map) {
             if (type === 'connected') {
                 var callback = (username, password) => {
-                    LOG("Connected");
+                    LOG("Connected", username);
                     this.isConnected = true;
                 }
             } else if (type == 'disconnected') {
-                var callback = () => {
+                var callback = (error) => {
                     LOG("Disconnected, error: " + error);
                     this.isConnected = false;
                     this.isLogged = false;
