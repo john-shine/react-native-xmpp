@@ -30,13 +30,14 @@ class XMPP {
     constructor() {
         this.isConnected = false;
         this.isLogged = false;
+        this.listeners = [];
         for (let type in map) {
-            if (map[type] === 'connected') {
+            if (type === 'connected') {
                 var callback = (username, password) => {
                     LOG("Connected");
                     this.isConnected = true;
                 }
-            } else if (map[type] == 'disconnected') {
+            } else if (type == 'disconnected') {
                 var callback = () => {
                     LOG("Disconnected, error: " + error);
                     this.isConnected = false;
@@ -47,7 +48,7 @@ class XMPP {
                     LOG(type);
                 };
             }
-            let listener = NativeAppEventEmitter.addListener(type, callback.bind(this));
+            let listener = NativeAppEventEmitter.addListener(map[type], callback.bind(this));
             this.listeners.push(listener)
         }
     }
