@@ -126,8 +126,8 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
 
     @Override
     @ReactMethod
-    public void requestMessageId() {
-        this.xmppService.requestMessageId();
+    public void requestMessageId(Promise promise) {
+        this.xmppService.requestMessageId(promise);
     }
 
 }

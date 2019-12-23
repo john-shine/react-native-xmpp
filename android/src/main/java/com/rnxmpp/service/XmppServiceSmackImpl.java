@@ -487,8 +487,12 @@ public class XmppServiceSmackImpl implements XmppService, ChatMessageListener, C
     }
 
     @Override
-    public void requestMessageId() {
-        xmppServiceListener.onMessageIdGenerated(generateMessageId());
+    public void requestMessageId(Promise promise) {
+        String messageId = generateMessageId();
+        if (messageId != null) {
+            promise.resolve(messageId);
+        }
+        promise.reject("unable generate message id.");
     }
 
     @Override

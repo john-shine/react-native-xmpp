@@ -11,7 +11,6 @@ import org.jivesoftware.smack.roster.Roster;
  */
 
 public interface XmppServiceListener {
-    void onMessageIdGenerated(String messageId);
     void onMessageReceived(Message message);
     void onMessageDelivered(String messageId);
     void onGroupMessageReceived(Message message);

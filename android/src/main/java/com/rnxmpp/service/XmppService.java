@@ -45,7 +45,7 @@ public interface XmppService {
     void sendComposingState(String to, String thread, String state, Promise promise);
 
     @ReactMethod
-    void requestMessageId();
+    void requestMessageId(Promise promise);
 
     @ReactMethod
     void joinRoom(String mucJid, String userNickname, String lastMessage, Promise promise);

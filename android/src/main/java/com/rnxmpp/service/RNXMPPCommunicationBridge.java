@@ -42,19 +42,11 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public static final String RNXMPP_DISCONNECTED       = "RNXMPPDisconnected";
     public static final String RNXMPP_AUTHENTICATED      = "RNXMPPAuthenticated";
     public static final String RNXMPP_TYPINGSTATUS       = "RNXMPPTypingStatus";
-    public static final String RNXMPP_MESSAGE_ID_GENERATED = "RNXMPPMessageIdGenerated";
-    public static final String RNXMPP_MESSAGE_SENT       = "RNXMPPMessageSent";
 
     ReactContext reactContext;
 
     public RNXMPPCommunicationBridge(ReactContext reactContext) {
         this.reactContext = reactContext;
-    }
-
-    @Override
-    public void onMessageIdGenerated(String messageId) {
-        Log.e("Message id is", messageId);
-        sendEvent(reactContext, RNXMPP_MESSAGE_ID_GENERATED, messageId);
     }
 
     @Override

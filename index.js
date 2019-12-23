@@ -10,7 +10,6 @@ var map = {
     'IQ': 'RNXMPPIQ',
     'roster': 'RNXMPPRoster',
     'presence': 'RNXMPPPresenced',
-    'messageIDGenerated': 'RNXMPPMessageIdGenerated',
     'messageReceived' : 'RNXMPPMessageReceived',
     'messageDelivered':'RNXMPPMessageDelivered',
     'typingStatus':'RNXMPPTypingStatus'
