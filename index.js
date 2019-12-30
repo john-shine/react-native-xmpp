@@ -29,7 +29,7 @@ class XMPP {
     constructor() {
         this.isConnected = false;
         this.isLogged = false;
-        this.listeners = [];
+        this.listeners = {};
         for (let type in map) {
             if (type === 'connected') {
                 var callback = (username, password) => {
@@ -48,14 +48,18 @@ class XMPP {
                 };
             }
             let listener = NativeAppEventEmitter.addListener(map[type], callback.bind(this));
-            this.listeners.push(listener)
+            this.listeners[type] = listener;
         }
     }
 
     on(type, callback) {
         if (map[type]) {
+            if (type in this.listeners) {
+                console.warn('listener ' + type + ' already registered.');
+                return;
+            }
             const listener = NativeAppEventEmitter.addListener(map[type], callback);
-            this.listeners.push(listener);
+            this.listeners[type] = listener;
             return listener;
         } else {
             throw "No registered type: " + type;
@@ -64,26 +68,25 @@ class XMPP {
 
     removeListener(type) {
         if (map[type]) {
-            for (let i = 0; i < this.listeners.length; i++) {
-                let listener = this.listeners[i];
+            for (let k in this.listeners) {
+                let listener = this.listeners[k];
                 if (listener.eventType === map[type]) {
                     listener.remove();
-                    let index = this.listeners.indexOf(listener);
-                    if (index > -1) {
-                        this.listeners.splice(index, 1);
-                    }
+                    delete this.listeners[k];
                     LOG(`Event listener of type "${type}" removed`);
                 }
             }
+        } else {
+            console.error('type ' + type + ' listener is not exist.');
         }
     }
 
     removeListeners() {
-        for (let i = 0; i < this.listeners.length; i++) {
-            this.listeners[i].remove();
+        for (let k in this.listeners) {
+            this.listeners[k].remove();
         }
 
-        this.listeners = [];
+        this.listeners = {};
         
         LOG('All event listeners removed');
     }
