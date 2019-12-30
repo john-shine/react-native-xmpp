@@ -130,6 +130,11 @@ public class XmppServiceSmackImpl implements XmppService, ChatMessageListener, C
     String username ="", password1="";
     @Override
     public void connect(String jid, String password, String authMethod, String hostname, Integer port, Promise promise) {
+        if (connection != null && connection.isAuthenticated()) {
+            // avoid duplicate login
+            promise.resolve(null);
+        }
+
         final String[] jidParts = jid.split("@");
         String[] serviceNameParts = jidParts[1].split("/");
         String serviceName = serviceNameParts[0];
@@ -143,7 +148,6 @@ public class XmppServiceSmackImpl implements XmppService, ChatMessageListener, C
 
         XMPPTCPConnectionConfiguration.Builder confBuilder = null;
         try {
-
             InetAddress inetAddress = getInetAddressByName(hostname);
             HostnameVerifier verifier = new HostnameVerifier() {
                 @Override
@@ -604,7 +608,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatMessageListener, C
 
     @Override
     public void authenticated(XMPPConnection connection, boolean resumed) {
-        this.xmppServiceListener.onAuthenticated(connection.getUser().toString(), password);
+        this.xmppServiceListener.onAuthenticated(connection.getUser().toString(), password1);
     }
 
     @Override

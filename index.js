@@ -48,7 +48,7 @@ class XMPP {
                 };
             }
             let listener = NativeAppEventEmitter.addListener(map[type], callback.bind(this));
-            this.listeners[type] = listener;
+            this.listeners['_' + type] = listener;
         }
     }
 
