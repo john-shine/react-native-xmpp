@@ -1,69 +1,87 @@
 # react-native-xmpp
 
-An XMPP library for React Native.
-
-A simple interface for native XMPP communication. Both iOS and Android are supported.
+An XMPP library for React Native. Android platform are tested.
 
 
 ## Example
 
 ```js
-var XMPP = require("react-native-xmpp");
+import XMPP = from 'react-native-xmpp';
 
-// optional callbacks
-XMPP.on("message", message =>
+// events callbacks
+XMPP.on("messageReceived", message =>
   console.log("MESSAGE:" + JSON.stringify(message))
 );
-XMPP.on("iq", message => console.log("IQ:" + JSON.stringify(message)));
+XMPP.on("messageDelivered", message =>
+  console.log("MESSAGE:" + JSON.stringify(message))
+);
+XMPP.on("IQ", message => console.log("IQ:" + JSON.stringify(message)));
+XMPP.on("roster", roster => console.log("roster received:" + JSON.stringify(roster)));
 XMPP.on("presence", message =>
   console.log("PRESENCE:" + JSON.stringify(message))
 );
-XMPP.on("error", message => console.log("ERROR:" + message));
-XMPP.on("loginError", message => console.log("LOGIN ERROR:" + message));
-XMPP.on("login", message => console.log("LOGGED!"));
-XMPP.on("connect", message => console.log("CONNECTED!"));
-XMPP.on("disconnect", message => console.log("DISCONNECTED!"));
-
-// trustHosts (ignore self-signed SSL issues)
-// Warning: Do not use this in production (security will be compromised).
-XMPP.trustHosts(["chat.google.com"]);
-
-// connect
-XMPP.connect(
-  MYJID,
-  MYPASSWORD
+XMPP.on("typingStatus", status =>
+  console.log("user is typing:" + JSON.stringify(status))
 );
 
+XMPP.on("connected", message => console.log("CONNECTED!"));
+XMPP.on("authenticated", message => console.log("LOGGED!"));
+XMPP.on("disconnected", message => console.log("DISCONNECTED!"));
+
+// trustHosts (ignore self-signed SSL issues). Warning: Do not use this in production (security will be compromised).
+XMPP.trustHosts(["chat.xxxxx.com"]);
+
+// connect && login in xmpp server
+XMPP.connect(username, password, auth = RNXMPP.SCRAMSHA1, hostname = null, port = 5222).then(()=> {
+  console.log('login success.');
+}).catch(err => {
+  console.log('login failure: ', err);
+});
+
 // send message
-XMPP.message("Hello world!", TOJID);
+XMPP.sendMessage("Hello world!", TO_JID).then(()=> {
+  console.log('send message to ' + TO_JID + ' success.');
+}).catch(err => {
+  console.log('send message to ' + TO_JID + ' failure: ', err);
+});
 
 // join room(s)
-XMPP.joinRoom(ROOMJID_1, ROOMNICKNAME);
-XMPP.joinRoom(ROOMJID_2, ROOMNICKNAME);
+XMPP.joinRoom(ROOM_JID, ROOM_NICKNAME).then(()=> {
+  console.log('join room success.');
+}).catch(err => {
+  console.log('join room failure: ', err);
+});
 
 // send message to room(s)
-XMPP.sendRoomMessage(ROOMJID_1, "Hello room 1!");
-XMPP.sendRoomMessage(ROOMJID_2, "Hello room 2!");
+XMPP.sendRoomMessage(ROOM_JID, "Hello room!").then(()=> {
+  console.log('send room message success.');
+}).catch(err => {
+  console.log('send room message failure: ', err);
+});
 
 // leave room(s)
-XMPP.leaveRoom(ROOMJID_1);
-XMPP.leaveRoom(ROOMJID_2);
+XMPP.leaveRoom(ROOMJID).then(()=> {
+   console.log('leave room success.');
+ }).catch(err => {
+   console.log('leave room failure: ', err);
+ });
 
 // disconnect
 XMPP.disconnect();
 
-// remove all event listeners (recommended on componentWillUnmount)
+// remove all event listeners registered (recommended on componentWillUnmount)
 XMPP.removeListeners();
 
-// remove specific event listener (type can be 'message', 'iq', etc.)
-XMPP.removeListener(TYPE);
+// remove specific event listener
+// EVENT_TYPE can be: 'connected', 'authenticated', 'disconnected', 'IQ', 'roster', 'presence', 'messageReceived', 'messageDelivered', 'typingStatus'
+XMPP.removeListener(EVENT_TYPE);
 ```
 
 ## Getting started
 
-1. `npm install react-native-xmpp --save`
+1. `yarn add react-native-xmpp`
 
-### iOS
+### iOS (untested)
 
 Please use CocoaPods
 
