@@ -5,77 +5,7 @@ An XMPP library for React Native. Android platform are tested.
 
 ## Example
 
-```js
-import XMPP = from 'react-native-xmpp';
-
-// events callbacks
-XMPP.on("messageReceived", message =>
-  console.log("MESSAGE:" + JSON.stringify(message))
-);
-XMPP.on("messageDelivered", message =>
-  console.log("MESSAGE:" + JSON.stringify(message))
-);
-XMPP.on("IQ", message => console.log("IQ:" + JSON.stringify(message)));
-XMPP.on("roster", roster => console.log("roster received:" + JSON.stringify(roster)));
-XMPP.on("presence", message =>
-  console.log("PRESENCE:" + JSON.stringify(message))
-);
-XMPP.on("typingStatus", status =>
-  console.log("user is typing:" + JSON.stringify(status))
-);
-
-XMPP.on("connected", message => console.log("CONNECTED!"));
-XMPP.on("authenticated", message => console.log("LOGGED!"));
-XMPP.on("disconnected", message => console.log("DISCONNECTED!"));
-
-// trustHosts (ignore self-signed SSL issues). Warning: Do not use this in production (security will be compromised).
-XMPP.trustHosts(["chat.xxxxx.com"]);
-
-// connect && login in xmpp server
-XMPP.connect(username, password, auth = RNXMPP.SCRAMSHA1, hostname = null, port = 5222).then(()=> {
-  console.log('login success.');
-}).catch(err => {
-  console.log('login failure: ', err);
-});
-
-// send message
-XMPP.sendMessage("Hello world!", TO_JID).then(()=> {
-  console.log('send message to ' + TO_JID + ' success.');
-}).catch(err => {
-  console.log('send message to ' + TO_JID + ' failure: ', err);
-});
-
-// join room(s)
-XMPP.joinRoom(ROOM_JID, ROOM_NICKNAME).then(()=> {
-  console.log('join room success.');
-}).catch(err => {
-  console.log('join room failure: ', err);
-});
-
-// send message to room(s)
-XMPP.sendRoomMessage(ROOM_JID, "Hello room!").then(()=> {
-  console.log('send room message success.');
-}).catch(err => {
-  console.log('send room message failure: ', err);
-});
-
-// leave room(s)
-XMPP.leaveRoom(ROOMJID).then(()=> {
-   console.log('leave room success.');
- }).catch(err => {
-   console.log('leave room failure: ', err);
- });
-
-// disconnect
-XMPP.disconnect();
-
-// remove all event listeners registered (recommended on componentWillUnmount)
-XMPP.removeListeners();
-
-// remove specific event listener
-// EVENT_TYPE can be: 'connected', 'authenticated', 'disconnected', 'IQ', 'roster', 'presence', 'messageReceived', 'messageDelivered', 'typingStatus'
-XMPP.removeListener(EVENT_TYPE);
-```
+view demo on repository: https://github.com/john-shine/react-native-xmpp-demo/
 
 ## Getting started
 
